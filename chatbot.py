@@ -20,7 +20,8 @@ import sounddevice as sd
 import soundfile as sf
 import whisper
 import re
-import pyttsx3
+from gtts import gTTS
+import pygame
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline, StoppingCriteria, StoppingCriteriaList
 
 
@@ -172,14 +173,37 @@ def truncate_response(response, max_sentences=3):
 
 def speak_text(text):
     """
-    Convert text to speech using pyttsx3.
+    Convert text to speech using gTTS (Google Text-to-Speech) and play it with pygame.
 
     Args:
         text: The text to convert to speech
     """
-    engine = pyttsx3.init()
-    engine.say(text)
-    engine.runAndWait()
+    # Create a temporary file to store the audio
+    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp_file:
+        temp_filename = temp_file.name
+
+    try:
+        # Generate the speech audio file
+        tts = gTTS(text=text, lang='en', slow=False)
+        tts.save(temp_filename)
+
+        # Initialize pygame mixer
+        pygame.mixer.init()
+
+        # Load and play the audio file
+        pygame.mixer.music.load(temp_filename)
+        pygame.mixer.music.play()
+
+        # Wait for the audio to finish playing
+        while pygame.mixer.music.get_busy():
+            pygame.time.Clock().tick(10)
+
+        # Clean up pygame resources
+        pygame.mixer.quit()
+    finally:
+        # Clean up the temporary file
+        if os.path.exists(temp_filename):
+            os.unlink(temp_filename)
 
 
 class Chatbot:

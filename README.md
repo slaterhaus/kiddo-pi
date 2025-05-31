@@ -5,7 +5,7 @@ A chatbot implementation that uses the SmolLm 360M model locally with voice inpu
 The chatbot supports:
 - Text-based input and output
 - Voice input using OpenAI's Whisper speech recognition
-- Voice output using pyttsx3 text-to-speech
+- Voice output using gTTS (Google Text-to-Speech)
 
 I've configured this to run on a Raspberry Pi 5 so it can answer questions from elementary age students, but it could be modified to run on anything for anyone.
 
@@ -23,7 +23,8 @@ I've configured this to run on a Raspberry Pi 5 so it can answer questions from 
 - PyAudio: For audio input/output
 - NumPy and SciPy: For audio processing
 - openai-whisper: For speech recognition (using OpenAI's Whisper model)
-- pyttsx3: For text-to-speech conversion
+- gTTS: For text-to-speech conversion
+- pygame: For playing audio files
 - SoundFile: For reading/writing audio files
 - Microphone and speakers/headphones for voice interaction
 
@@ -66,13 +67,15 @@ python chatbot.py --download-whisper
 
 #### Setting up Text-to-Speech (for voice output)
 
-The chatbot uses pyttsx3 for text-to-speech, which is a simple, offline text-to-speech library that works on most platforms without additional setup. It uses the default system TTS engine:
+The chatbot uses gTTS (Google Text-to-Speech) for text-to-speech conversion, which provides high-quality speech synthesis. The pygame library is used to play the generated audio.
 
-- On Windows, it uses SAPI5
-- On macOS, it uses NSS
-- On Linux, it uses espeak
+Note that gTTS typically requires an internet connection to generate speech, as it uses Google's Text-to-Speech API. The chatbot will:
+1. Convert text to speech using gTTS
+2. Save the speech to a temporary audio file
+3. Play the audio file using pygame
+4. Delete the temporary file after playback
 
-No additional setup is required beyond installing the pyttsx3 library, which is included in the requirements.txt file.
+Both gTTS and pygame are included in the requirements.txt file and will be installed automatically.
 
 ## Usage
 
@@ -148,7 +151,7 @@ The chatbot supports the following command-line arguments:
 - `--download-whisper`: Download the Whisper model for offline use
 
 ### Voice Output Arguments
-- `--voice-output`: Enable voice output using pyttsx3 text-to-speech
+- `--voice-output`: Enable voice output using gTTS (Google Text-to-Speech)
 
 Examples:
 
@@ -237,7 +240,7 @@ The default model used is SmolLm 360M, a lightweight language model with 360 mil
 - Voice input requires a working microphone connected to your device.
 - Voice output requires speakers or headphones connected to your device.
 - The Whisper model requires additional RAM/VRAM to run (approximately 500MB for the small model).
-- The pyttsx3 library uses your system's default text-to-speech engine, which is typically pre-installed on most operating systems.
+- The gTTS library uses Google's Text-to-Speech API, which requires an internet connection to generate speech. The pygame library is used to play the generated audio.
 - On a Raspberry Pi 5, voice processing may be slower, but it should still be usable.
 - For offline use with voice features, download both the language model and the Whisper model in advance.
 - If you encounter audio input/output issues, check your system's audio settings and ensure the microphone and speakers are properly configured.
