@@ -3,3 +3,5 @@ test_models
 .qodo
 .idea
 .requirements_installed
+test_*
+__pycache__
