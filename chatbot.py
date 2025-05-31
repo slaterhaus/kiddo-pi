@@ -20,6 +20,7 @@ import sounddevice as sd
 import soundfile as sf
 import whisper
 import re
+import pyttsx3
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline, StoppingCriteria, StoppingCriteriaList
 
 
@@ -169,11 +170,25 @@ def truncate_response(response, max_sentences=3):
     return '. '.join(sentences[:max_sentences]) + '.' if sentences else response
 
 
+def speak_text(text):
+    """
+    Convert text to speech using pyttsx3.
+
+    Args:
+        text: The text to convert to speech
+    """
+    engine = pyttsx3.init()
+    engine.say(text)
+    engine.runAndWait()
+
+
 class Chatbot:
     def __init__(self, model_id=MODEL_ID, device=None, model_dir=None,
-                 voice_input=False, whisper_model_name=DEFAULT_WHISPER_MODEL, whisper_model_dir=None):
+                 voice_input=False, whisper_model_name=DEFAULT_WHISPER_MODEL, whisper_model_dir=None,
+                 voice_output=False):
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.voice_input = voice_input
+        self.voice_output = voice_output
         self.whisper_model = None
 
         # Load Whisper model if voice input is enabled
@@ -217,7 +232,7 @@ class Chatbot:
             temperature=0.3,  # Lower temperature for more focused responses
             top_p=0.9,
             top_k=40,
-            max_new_tokens=256,
+            max_new_tokens=128,
             pad_token_id=self.tokenizer.eos_token_id
         )
 
@@ -246,8 +261,13 @@ class Chatbot:
 
     def chat(self):
         global messages
-        print("SmolLM Chatbot - Type 'exit' to quit" + (" (Voice input enabled)" if self.voice_input else ""))
+        voice_status = ""
+        if self.voice_input:
+            voice_status += " (Voice input enabled)"
+        if self.voice_output:
+            voice_status += " (Voice output enabled)"
 
+        print("SmolLM Chatbot - Type 'exit' to quit" + voice_status)
         while True:
             try:
                 if self.voice_input:
@@ -255,18 +275,26 @@ class Chatbot:
                     audio_data = record_audio()
                     user_input = transcribe_audio(audio_data, self.whisper_model, )
                     print(f"\nYou (voice): {user_input}")
+
+                    # If user didn't say anything, continue listening
+                    if not user_input.strip():
+                        print("No voice input detected. Listening again...")
+                        continue
                 else:
-                    print("\nAudio input unavailable.")
                     # Use text input
                     user_input = input("\nYou: ")
 
                 if re.search('^(exit|bye|quit).?$', user_input, re.IGNORECASE):
                     break
 
-                messages.append({"role": "user", "content": f"{user_input}\n\nAnswer in 2–3 sentences for a child"})
+                messages.append({"role": "user", "content": f"{user_input}\n\nAnswer in 2–3 sentences for a child, no more than 128 tokens."})
 
                 response = self.generate_response(messages)
                 print(f"\nAssistant: {response}")
+
+                # Use text-to-speech if enabled
+                if self.voice_output:
+                    speak_text(response)
 
                 messages.append({"role": "assistant", "content": response})
 
@@ -293,6 +321,7 @@ def main():
 
     # Voice input arguments
     parser.add_argument("--voice-input", action="store_true", help="Enable voice input using Whisper")
+    parser.add_argument("--voice-output", action="store_true", help="Enable voice output using text-to-speech")
     parser.add_argument("--whisper-model", type=str, default=DEFAULT_WHISPER_MODEL,
                         help="Whisper model size (tiny, base, small, medium, large)")
     parser.add_argument("--whisper-model-dir", type=str, help="Directory containing the local Whisper model files")
@@ -328,7 +357,8 @@ def main():
         model_dir=args.model_dir,
         voice_input=args.voice_input,
         whisper_model_name=args.whisper_model,
-        whisper_model_dir=args.whisper_model_dir
+        whisper_model_dir=args.whisper_model_dir,
+        voice_output=args.voice_output
     )
     chatbot.chat()
 

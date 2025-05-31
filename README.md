@@ -5,7 +5,7 @@ A chatbot implementation that uses the SmolLm 360M model locally with voice inpu
 The chatbot supports:
 - Text-based input and output
 - Voice input using OpenAI's Whisper speech recognition
-- Voice output using Piper text-to-speech
+- Voice output using pyttsx3 text-to-speech
 
 I've configured this to run on a Raspberry Pi 5 so it can answer questions from elementary age students, but it could be modified to run on anything for anyone.
 
@@ -23,7 +23,7 @@ I've configured this to run on a Raspberry Pi 5 so it can answer questions from 
 - PyAudio: For audio input/output
 - NumPy and SciPy: For audio processing
 - openai-whisper: For speech recognition (using OpenAI's Whisper model)
-- Piper-TTS: For text-to-speech conversion
+- pyttsx3: For text-to-speech conversion
 - SoundFile: For reading/writing audio files
 - Microphone and speakers/headphones for voice interaction
 
@@ -64,26 +64,15 @@ The Whisper model will be downloaded automatically when you first use voice inpu
 python chatbot.py --download-whisper
 ```
 
-#### Setting up Piper (for voice output)
+#### Setting up Text-to-Speech (for voice output)
 
-To use voice output, you need to download a Piper voice model:
+The chatbot uses pyttsx3 for text-to-speech, which is a simple, offline text-to-speech library that works on most platforms without additional setup. It uses the default system TTS engine:
 
-1. Create a directory for Piper voice models:
-   ```
-   mkdir -p piper-voices
-   ```
+- On Windows, it uses SAPI5
+- On macOS, it uses NSS
+- On Linux, it uses espeak
 
-2. Download a voice model from the [Piper releases page](https://github.com/rhasspy/piper/releases):
-   ```
-   # Example for downloading the en_US-lessac-medium voice
-   wget https://github.com/rhasspy/piper/releases/download/v1.2.0/voice-en_US-lessac-medium.tar.gz
-   tar -xzf voice-en_US-lessac-medium.tar.gz -C piper-voices
-   ```
-
-3. The voice model includes:
-   - `MODEL_NAME.onnx`: The voice model file
-   - `MODEL_NAME.onnx.json`: Model configuration
-   - `config.json`: Voice configuration
+No additional setup is required beyond installing the pyttsx3 library, which is included in the requirements.txt file.
 
 ## Usage
 
@@ -159,9 +148,7 @@ The chatbot supports the following command-line arguments:
 - `--download-whisper`: Download the Whisper model for offline use
 
 ### Voice Output Arguments
-- `--voice-output`: Enable voice output using Piper
-- `--piper-voice`: Specify the Piper voice to use (default: "en_US-lessac-medium")
-- `--piper-model-dir`: Directory containing the Piper voice models (default: "piper-voices")
+- `--voice-output`: Enable voice output using pyttsx3 text-to-speech
 
 Examples:
 
@@ -195,8 +182,8 @@ python chatbot.py --voice-input --voice-output
 # Download Whisper model for offline voice input
 python chatbot.py --download-whisper
 
-# Use a specific Piper voice
-python chatbot.py --voice-output --piper-voice en_GB-alba-medium
+# Enable voice output
+python chatbot.py --voice-output
 
 # Full offline mode with voice support
 python chatbot.py --model-dir models/SmolLM2-360M --voice-input --voice-output --whisper-model-dir models/whisper-small
@@ -250,7 +237,7 @@ The default model used is SmolLm 360M, a lightweight language model with 360 mil
 - Voice input requires a working microphone connected to your device.
 - Voice output requires speakers or headphones connected to your device.
 - The Whisper model requires additional RAM/VRAM to run (approximately 500MB for the small model).
-- Piper voice models are typically 40-100MB each, depending on the voice quality.
+- The pyttsx3 library uses your system's default text-to-speech engine, which is typically pre-installed on most operating systems.
 - On a Raspberry Pi 5, voice processing may be slower, but it should still be usable.
 - For offline use with voice features, download both the language model and the Whisper model in advance.
 - If you encounter audio input/output issues, check your system's audio settings and ensure the microphone and speakers are properly configured.
